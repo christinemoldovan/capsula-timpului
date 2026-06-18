@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capsula Timpului</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  /* ── RESET & BASE ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --g0: #050f05;
+    --g1: #0a1a0a;
+    --g2: #0f230f;
+    --g3: #163016;
+    --g4: #1e4020;
+    --ga: #2e7d32;
+    --gb: #43a047;
+    --gc: #66bb6a;
+    --gd: #a5d6a7;
+    --ge: #e8f5e9;
+    --border: rgba(102,187,106,0.15);
+    --border2: rgba(102,187,106,0.3);
+    --text: #e8f5e9;
+    --text2: #a5d6a7;
+    --text3: #558b2f;
+    --red: #ef5350;
+    --yellow: #fff176;
+    --font-head: 'Barlow Condensed', sans-serif;
+    --font-body: 'Barlow', sans-serif;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-body);
+    background: var(--g0);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* ── LOCK SCREEN ── */
+  #lock-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--g0);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 1.5rem;
+  }
+  #lock-screen.hidden { display: none; }
+  .lock-card {
+    background: var(--g2);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    width: min(360px, 92vw);
+    text-align: center;
+  }
+  .lock-icon {
+    font-size: 48px; color: var(--gc);
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .lock-title {
+    font-family: var(--font-head);
+    font-size: 26px; font-weight: 700;
+    color: var(--gd); letter-spacing: 1px;
+    margin-bottom: 0.25rem;
+  }
+  .lock-sub { font-size: 13px; color: var(--text3); margin-bottom: 1.5rem; }
+  .lock-input {
+    width: 100%;
+    background: var(--g1);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 14px;
+    font-size: 15px;
+    font-family: var(--font-body);
+    outline: none;
+    text-align: center;
+    letter-spacing: 4px;
+    margin-bottom: 1rem;
+  }
+  .lock-input:focus { border-color: var(--gc); }
+  .lock-btn {
+    width: 100%;
+    background: var(--ga);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 11px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .lock-btn:hover { background: var(--gb); }
+  .lock-error {
+    color: var(--red); font-size: 13px;
+    margin-top: -0.5rem; margin-bottom: 0.5rem;
+    min-height: 18px;
+  }
+  .lock-back {
+    background: none; border: none;
+    color: var(--text3); font-size: 13px;
+    cursor: pointer; margin-top: 0.5rem;
+    font-family: var(--font-body);
+  }
+  .lock-back:hover { color: var(--gc); }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--g1);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.25rem;
+    display: flex; align-items: center;
+    justify-content: space-between;
+    height: 58px; position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-badge {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--ga); border: 2px solid var(--gc);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head); font-size: 18px; font-weight: 700; color: #fff;
+  }
+  .team-name {
+    font-family: var(--font-head);
+    font-size: 22px; font-weight: 700;
+    color: var(--gd); letter-spacing: 1px;
+  }
+  .team-sub { font-size: 11px; color: var(--text3); margin-top: -2px; }
+  .admin-btn {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    font-family: var(--font-body);
+    transition: all 0.2s;
+  }
+  .admin-btn:hover { background: var(--g3); border-color: var(--gc); color: var(--gc); }
+  .admin-btn.active { background: var(--ga); border-color: var(--ga); color: #fff; }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex; gap: 2px;
+    background: var(--g1);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1rem;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 10px 16px;
+    border: none; background: transparent;
+    color: var(--text3); font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: var(--font-body);
+    border-bottom: 2px solid transparent;
+    white-space: nowrap; transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tab:hover { color: var(--gc); }
+  .tab.active { color: var(--gc); border-bottom-color: var(--gc); }
+
+  /* ── LAYOUT ── */
+  .page { display: none; padding: 1rem; max-width: 860px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* ── SUMMARY CARDS ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 8px; margin-bottom: 1.25rem;
+  }
+  .scard {
+    background: var(--g2);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 0.75rem 0.5rem;
+    text-align: center;
+  }
+  .scard-num {
+    font-family: var(--font-head);
+    font-size: 28px; font-weight: 700; line-height: 1;
+    color: var(--gc);
+  }
+  .scard-num.v { color: var(--gc); }
+  .scard-num.e { color: var(--yellow); }
+  .scard-num.i { color: var(--red); }
+  .scard-lbl { font-size: 11px; color: var(--text3); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--g2);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-family: var(--font-head);
+    font-size: 16px; font-weight: 700; letter-spacing: 0.5px;
+    color: var(--gd); margin-bottom: 0.85rem;
+    display: flex; align-items: center; gap: 8px;
+    text-transform: uppercase;
+  }
+
+  /* ── PLAYER ROWS ── */
+  .player-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .rank { font-size: 12px; color: var(--text3); min-width: 20px; font-weight: 600; }
+  .player-name { font-size: 14px; min-width: 82px; color: var(--text); }
+  .bar-bg { flex: 1; height: 7px; background: var(--g4); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--ga), var(--gc)); border-radius: 4px; transition: width 0.5s; }
+  .goals-count { font-size: 13px; color: var(--gc); min-width: 32px; text-align: right; font-weight: 600; }
+
+  /* ── MATCH CARDS ── */
+  .match-card {
+    background: var(--g1);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 0.85rem 1rem;
+    margin-bottom: 0.7rem;
+  }
+  .match-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 5px; }
+  .match-opp { font-family: var(--font-head); font-size: 17px; font-weight: 600; color: var(--text); }
+  .match-score { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--text); }
+  .badge {
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-v { background: rgba(46,125,50,0.3); color: #a5d6a7; border: 1px solid rgba(102,187,106,0.3); }
+  .badge-e { background: rgba(255,241,118,0.15); color: #fff176; border: 1px solid rgba(255,241,118,0.3); }
+  .badge-i { background: rgba(239,83,80,0.15); color: #ef9a9a; border: 1px solid rgba(239,83,80,0.3); }
+  .badge-date { background: var(--g3); color: var(--text3); font-size: 11px; padding: 3px 8px; border-radius: 10px; }
+  .scorers { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .present-line { font-size: 12px; color: var(--text3); margin-top: 3px; }
+
+  /* ── STATS TABLE ── */
+  .stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .stats-table th { text-align: left; padding: 8px 10px; color: var(--text2); border-bottom: 1px solid var(--border); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .stats-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .stats-table tr:hover td { background: var(--g3); }
+  .gk-tag { font-size: 10px; background: rgba(25,118,210,0.2); color: #90caf9; border-radius: 4px; padding: 1px 5px; margin-left: 4px; }
+
+  /* ── ADMIN PANEL ── */
+  #admin-panel { display: none; }
+  #admin-panel.active { display: block; }
+  .admin-section { background: var(--g2); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .admin-title {
+    font-family: var(--font-head); font-size: 18px; font-weight: 700;
+    color: var(--gd); margin-bottom: 1rem; text-transform: uppercase;
+    letter-spacing: 1px; display: flex; align-items: center; gap: 8px;
+  }
+  .form-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; align-items: flex-end; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  input[type=text], input[type=number], input[type=date], select {
+    background: var(--g1);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--gc); }
+
+  .presence-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 6px; margin-top: 8px;
+  }
+  .pcheck {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px;
+    background: var(--g1); border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer;
+    transition: all 0.15s; user-select: none;
+  }
+  .pcheck:hover { border-color: var(--gb); }
+  .pcheck.on { background: rgba(46,125,50,0.25); border-color: var(--gb); }
+  .pcheck input[type=checkbox] { accent-color: var(--gc); }
+  .pcheck label { font-size: 13px; cursor: pointer; color: var(--text); }
+
+  .scorer-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+
+  .btn {
+    padding: 8px 18px; border-radius: 8px;
+    border: 1px solid var(--border2);
+    background: transparent; color: var(--gc);
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    font-family: var(--font-body); display: inline-flex; align-items: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--g3); border-color: var(--gc); }
+  .btn-primary { background: var(--ga); color: #fff; border-color: var(--ga); }
+  .btn-primary:hover { background: var(--gb); border-color: var(--gb); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-danger { border-color: rgba(239,83,80,0.4); color: var(--red); }
+  .btn-danger:hover { background: rgba(239,83,80,0.15); }
+
+  /* ── LOADING ── */
+  .loading { text-align: center; padding: 2rem; color: var(--text3); font-size: 14px; }
+  .empty { text-align: center; padding: 2rem; color: var(--text3); font-size: 14px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: var(--ga); color: #fff;
+    padding: 10px 20px; border-radius: 8px;
+    font-size: 14px; font-weight: 600;
+    z-index: 9998; opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.err { background: #c62828; }
+
+  /* ── MATCH ENTRY ── */
+  .match-entry-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; flex-wrap: wrap; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--g0); }
+  ::-webkit-scrollbar-thumb { background: var(--g4); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ── LOCK SCREEN ── -->
+<div id="lock-screen">
+  <div class="lock-card">
+    <i class="ti ti-shield-lock lock-icon"></i>
+    <div class="lock-title">ADMIN ACCESS</div>
+    <div class="lock-sub">Capsula Timpului — Panou administrator</div>
+    <input type="password" id="lock-input" class="lock-input" placeholder="••••••••" autocomplete="off">
+    <div class="lock-error" id="lock-error"></div>
+    <button class="lock-btn" onclick="tryUnlock()">
+      <i class="ti ti-login" style="font-size:16px"></i> Intră în admin
+    </button>
+    <br>
+    <button class="lock-back" onclick="goPublic()">
+      <i class="ti ti-eye" style="font-size:13px"></i> Vezi statisticile publice fără autentificare
+    </button>
+  </div>
+</div>
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-badge">C</div>
+    <div>
+      <div class="team-name">CAPSULA TIMPULUI</div>
+      <div class="team-sub">Statistici echipă de fotbal</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div id="admin-indicator" style="display:none">
+      <button class="admin-btn active" onclick="logoutAdmin()">
+        <i class="ti ti-shield-check" style="font-size:14px"></i> Admin
+        <i class="ti ti-logout" style="font-size:13px;opacity:0.7"></i>
+      </button>
+    </div>
+    <div id="login-btn-wrap">
+      <button class="admin-btn" onclick="showLock()">
+        <i class="ti ti-lock" style="font-size:14px"></i> Admin
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TABS ── -->
+<div class="tabs">
+  <button class="tab active" onclick="showTab('rezumat',this)">
+    <i class="ti ti-layout-dashboard"></i> Rezumat
+  </button>
+  <button class="tab" onclick="showTab('golgheteri',this)">
+    <i class="ti ti-trophy"></i> Golgheteri
+  </button>
+  <button class="tab" onclick="showTab('meciuri',this)">
+    <i class="ti ti-ball-football"></i> Meciuri
+  </button>
+  <button class="tab" onclick="showTab('statistici',this)">
+    <i class="ti ti-chart-bar"></i> Statistici
+  </button>
+  <button class="tab" id="admin-tab" style="display:none;color:#66bb6a" onclick="showTab('admin',this)">
+    <i class="ti ti-settings"></i> Admin
+  </button>
+</div>
+
+<!-- ══ PAGES ══ -->
+
+<!-- REZUMAT -->
+<div id="tab-rezumat" class="page active">
+  <div class="summary-grid" id="summary-grid">
+    <div class="loading"><i class="ti ti-loader-2"></i> Se încarcă...</div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-flame"></i> Top marcatori</div>
+    <div id="top-mini"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-clock"></i> Ultimele meciuri</div>
+    <div id="recent-matches"></div>
+  </div>
+</div>
+
+<!-- GOLGHETERI -->
+<div id="tab-golgheteri" class="page">
+  <div class="card">
+    <div class="card-title"><i class="ti ti-trophy"></i> Clasament golgheteri</div>
+    <div id="golgheter-list"></div>
+  </div>
+</div>
+
+<!-- MECIURI -->
+<div id="tab-meciuri" class="page">
+  <div class="card">
+    <div class="card-title"><i class="ti ti-calendar"></i> Istoric meciuri</div>
+    <div id="matches-list"></div>
+  </div>
+</div>
+
+<!-- STATISTICI -->
+<div id="tab-statistici" class="page">
+  <div class="card">
+    <div class="card-title"><i class="ti ti-users"></i> Statistici complete</div>
+    <div style="overflow-x:auto">
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Jucător</th><th>Meciuri</th>
+            <th>Goluri</th><th>Medie / meci</th>
+          </tr>
+        </thead>
+        <tbody id="stats-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="tab-admin" class="page">
+  <div id="admin-panel">
+
+    <div class="admin-section">
+      <div class="admin-title"><i class="ti ti-plus"></i> Adaugă meci nou</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <span class="form-label">Adversar</span>
+          <input type="text" id="m-opp" placeholder="Numele echipei adverse" style="width:200px">
+        </div>
+        <div class="form-group">
+          <span class="form-label">Data</span>
+          <input type="date" id="m-date">
+        </div>
+        <div class="form-group">
+          <span class="form-label">Goluri noi</span>
+          <input type="number" id="m-our" min="0" value="0" style="width:75px">
+        </div>
+        <div class="form-group">
+          <span class="form-label">Goluri ei</span>
+          <input type="number" id="m-their" min="0" value="0" style="width:75px">
+        </div>
+      </div>
+
+      <div class="form-label" style="margin-bottom:6px">Prezență jucători</div>
+      <div class="presence-grid" id="presence-grid"></div>
+
+      <div class="form-label" style="margin:12px 0 6px">Marcatori (dintre jucătorii prezenți)</div>
+      <div id="scorer-rows"></div>
+      <button class="btn btn-sm" onclick="addScorerRow()" style="margin-top:4px">
+        <i class="ti ti-plus"></i> Adaugă marcator
+      </button>
+
+      <div class="match-entry-actions">
+        <button class="btn" onclick="resetForm()"><i class="ti ti-refresh"></i> Resetează</button>
+        <button class="btn btn-primary" onclick="saveMatch()"><i class="ti ti-device-floppy"></i> Salvează meci</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <div class="admin-title"><i class="ti ti-list"></i> Meciuri salvate</div>
+      <div id="admin-matches-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     CONFIGURARE FIREBASE — încărcată dintr-un fișier separat,
+     care NU este trimis pe GitHub (vezi .gitignore).
+     Trebuie să existe un fișier firebase-config.js în același folder.
+     ══════════════════════════════════════════ -->
+<script src="firebase-config.js"></script>
+
+<script>
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // ══════════════════════════════════════════
+  // PAROLA ADMIN — schimb-o cu ce vrei tu
+  // ══════════════════════════════════════════
+  const ADMIN_PASSWORD = "capsula2025";
+
+  const PLAYERS = ['Horatiu','Andrei','Hussein','Daniel','Sali','Duti','Vlad','Dragos','Marius','Raul','Laur','Precup','Jeler','David','Mita'];
+  const GK = 'Daniel';
+
+  let allMatches = [];
+  let isAdmin = false;
+
+  // ── AUTH ──
+  function tryUnlock() {
+    const val = document.getElementById('lock-input').value;
+    if (val === ADMIN_PASSWORD) {
+      isAdmin = true;
+      document.getElementById('lock-screen').classList.add('hidden');
+      document.getElementById('admin-tab').style.display = 'flex';
+      document.getElementById('admin-indicator').style.display = 'block';
+      document.getElementById('login-btn-wrap').style.display = 'none';
+      document.getElementById('admin-panel').classList.add('active');
+      buildPresenceGrid();
+      render();
+      toast('Bine ai venit, admin!');
+    } else {
+      document.getElementById('lock-error').textContent = 'Parolă incorectă. Încearcă din nou.';
+      document.getElementById('lock-input').value = '';
+      setTimeout(() => document.getElementById('lock-error').textContent = '', 2000);
+    }
+  }
+
+  function goPublic() {
+    document.getElementById('lock-screen').classList.add('hidden');
+    render();
+  }
+
+  function showLock() {
+    document.getElementById('lock-screen').classList.remove('hidden');
+    document.getElementById('lock-input').value = '';
+    document.getElementById('lock-error').textContent = '';
+  }
+
+  function logoutAdmin() {
+    isAdmin = false;
+    document.getElementById('admin-tab').style.display = 'none';
+    document.getElementById('admin-indicator').style.display = 'none';
+    document.getElementById('login-btn-wrap').style.display = 'block';
+    // switch to rezumat
+    showTab('rezumat', document.querySelector('.tab'));
+    toast('Ai ieșit din admin.');
+  }
+
+  document.getElementById('lock-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') tryUnlock();
+  });
+
+  // ── FIREBASE LISTENER ──
+  db.ref('matches').on('value', snap => {
+    const raw = snap.val() || {};
+    allMatches = Object.entries(raw).map(([id, m]) => ({ id, ...m }));
+    allMatches.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    render();
+  });
+
+  // ── STATS ──
+  function getStats() {
+    const s = {};
+    PLAYERS.forEach(p => s[p] = { goals: 0, matches: 0 });
+    allMatches.forEach(m => {
+      (m.present || []).forEach(p => { if (s[p]) s[p].matches++; });
+      (m.scorers || []).forEach(sc => { if (s[sc.name]) s[sc.name].goals += sc.goals; });
+    });
+    return s;
+  }
+
+  // ── RENDER ──
+  function render() {
+    const stats = getStats();
+    const ms = allMatches;
+    const v = ms.filter(m => m.our > m.their).length;
+    const e = ms.filter(m => m.our === m.their).length;
+    const i = ms.filter(m => m.our < m.their).length;
+    const tg = ms.reduce((a, m) => a + (m.our || 0), 0);
+    const tc = ms.reduce((a, m) => a + (m.their || 0), 0);
+
+    document.getElementById('summary-grid').innerHTML = `
+      <div class="scard"><div class="scard-num">${ms.length}</div><div class="scard-lbl">Meciuri</div></div>
+      <div class="scard"><div class="scard-num v">${v}</div><div class="scard-lbl">Victorii</div></div>
+      <div class="scard"><div class="scard-num e">${e}</div><div class="scard-lbl">Remize</div></div>
+      <div class="scard"><div class="scard-num i">${i}</div><div class="scard-lbl">Înfrângeri</div></div>
+      <div class="scard"><div class="scard-num">${tg}</div><div class="scard-lbl">Goluri date</div></div>
+      <div class="scard"><div class="scard-num" style="color:#ef9a9a">${tc}</div><div class="scard-lbl">Goluri primite</div></div>
+    `;
+
+    const sorted = PLAYERS.filter(p => p !== GK)
+      .map(p => ({ name: p, ...stats[p] }))
+      .sort((a, b) => b.goals - a.goals || b.matches - a.matches);
+    const maxG = Math.max(1, sorted[0]?.goals || 1);
+
+    document.getElementById('top-mini').innerHTML = sorted.slice(0, 5).map((p, i) => `
+      <div class="player-row">
+        <span class="rank">${i + 1}</span>
+        <span class="player-name">${p.name}</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${(p.goals / maxG) * 100}%"></div></div>
+        <span class="goals-count">${p.goals}<span style="font-size:11px;font-weight:400;color:var(--text3)"> gol${p.goals !== 1 ? 'uri' : ''}</span></span>
+      </div>`).join('') || '<div class="empty">Niciun meci înregistrat</div>';
+
+    document.getElementById('recent-matches').innerHTML =
+      ms.slice().reverse().slice(0, 3).map(m => matchHTML(m, false)).join('')
+      || '<div class="empty">Niciun meci înregistrat</div>';
+
+    document.getElementById('golgheter-list').innerHTML = sorted.map((p, i) => `
+      <div class="player-row">
+        <span class="rank" style="font-size:14px;min-width:22px">${i + 1}</span>
+        <span class="player-name" style="min-width:90px;font-size:14px">${p.name}</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:${(p.goals / maxG) * 100}%"></div></div>
+        <span class="goals-count">${p.goals} <span style="font-size:11px;font-weight:400;color:var(--text3)">/ ${p.matches} mec.</span></span>
+      </div>`).join('') || '<div class="empty">Niciun gol înregistrat</div>';
+
+    document.getElementById('matches-list').innerHTML =
+      ms.slice().reverse().map(m => matchHTML(m, false)).join('')
+      || '<div class="empty">Niciun meci înregistrat</div>';
+
+    const allStats = PLAYERS.map(p => ({ name: p, ...stats[p], isGk: p === GK }))
+      .sort((a, b) => b.goals - a.goals || b.matches - a.matches);
+    document.getElementById('stats-tbody').innerHTML = allStats.map((p, i) => `
+      <tr>
+        <td style="color:var(--text3)">${i + 1}</td>
+        <td>${p.name}${p.isGk ? '<span class="gk-tag">POR</span>' : ''}</td>
+        <td>${p.matches}</td>
+        <td style="color:var(--gc);font-weight:600">${p.goals}</td>
+        <td>${p.matches > 0 ? (p.goals / p.matches).toFixed(2) : '–'}</td>
+      </tr>`).join('');
+
+    if (isAdmin) {
+      document.getElementById('admin-matches-list').innerHTML =
+        ms.slice().reverse().map(m => matchHTML(m, true)).join('')
+        || '<div class="empty">Niciun meci salvat</div>';
+    }
+  }
+
+  function matchHTML(m, withDelete) {
+    const r = m.our > m.their ? 'v' : m.our === m.their ? 'e' : 'i';
+    const rl = r === 'v' ? 'Victorie' : r === 'e' ? 'Egal' : 'Înfrângere';
+    return `<div class="match-card">
+      <div class="match-header">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="match-opp">vs ${m.opponent}</span>
+          ${m.date ? `<span class="badge-date">${m.date}</span>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="match-score">${m.our} – ${m.their}</span>
+          <span class="badge badge-${r}">${rl}</span>
+          ${withDelete ? `<button class="btn btn-sm btn-danger" onclick="deleteMatch('${m.id}')"><i class="ti ti-trash"></i></button>` : ''}
+        </div>
+      </div>
+      ${m.scorers && m.scorers.length ? `<div class="scorers"><i class="ti ti-ball-football" style="font-size:13px"></i> ${m.scorers.map(s => `${s.name} (${s.goals})`).join(', ')}</div>` : ''}
+      ${m.present && m.present.length ? `<div class="present-line"><i class="ti ti-users" style="font-size:12px"></i> ${m.present.join(', ')}</div>` : ''}
+    </div>`;
+  }
+
+  // ── ADMIN FORM ──
+  function buildPresenceGrid() {
+    document.getElementById('presence-grid').innerHTML = PLAYERS.map(p => `
+      <div class="pcheck" id="pc-${p}" onclick="toggleP('${p}')">
+        <input type="checkbox" id="cb-${p}" onclick="event.stopPropagation()">
+        <label for="cb-${p}">${p}${p === GK ? ' 🧤' : ''}</label>
+      </div>`).join('');
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('m-date').value = today;
+  }
+
+  function toggleP(name) {
+    const cb = document.getElementById('cb-' + name);
+    const card = document.getElementById('pc-' + name);
+    cb.checked = !cb.checked;
+    card.classList.toggle('on', cb.checked);
+    refreshScorerSelects();
+  }
+
+  function getPresent() {
+    return PLAYERS.filter(p => {
+      const c = document.getElementById('cb-' + p);
+      return c && c.checked;
+    });
+  }
+
+  function addScorerRow() {
+    const present = getPresent();
+    if (!present.length) { toast('Selectează mai întâi jucătorii prezenți!', true); return; }
+    const div = document.createElement('div');
+    div.className = 'scorer-row';
+    div.innerHTML = `
+      <select class="scorer-sel" style="flex:1;min-width:110px">${present.map(p => `<option value="${p}">${p}</option>`).join('')}</select>
+      <input type="number" class="goals-n" min="1" value="1" style="width:65px">
+      <button class="btn btn-sm btn-danger" onclick="this.parentElement.remove()"><i class="ti ti-x"></i></button>`;
+    document.getElementById('scorer-rows').appendChild(div);
+  }
+
+  function refreshScorerSelects() {
+    const present = getPresent();
+    document.querySelectorAll('.scorer-sel').forEach(sel => {
+      const cur = sel.value;
+      sel.innerHTML = present.map(p => `<option value="${p}"${p === cur ? ' selected' : ''}>${p}</option>`).join('');
+    });
+  }
+
+  function resetForm() {
+    document.getElementById('m-opp').value = '';
+    document.getElementById('m-our').value = 0;
+    document.getElementById('m-their').value = 0;
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('m-date').value = today;
+    PLAYERS.forEach(p => {
+      const c = document.getElementById('cb-' + p);
+      if (c) c.checked = false;
+      const pc = document.getElementById('pc-' + p);
+      if (pc) pc.classList.remove('on');
+    });
+    document.getElementById('scorer-rows').innerHTML = '';
+  }
+
+  function saveMatch() {
+    const opp = document.getElementById('m-opp').value.trim();
+    if (!opp) { toast('Introdu adversarul!', true); return; }
+    const our = parseInt(document.getElementById('m-our').value) || 0;
+    const their = parseInt(document.getElementById('m-their').value) || 0;
+    const date = document.getElementById('m-date').value;
+    const present = getPresent();
+    const scorersMap = {};
+    document.querySelectorAll('.scorer-row').forEach(row => {
+      const name = row.querySelector('.scorer-sel').value;
+      const g = parseInt(row.querySelector('.goals-n').value) || 1;
+      scorersMap[name] = (scorersMap[name] || 0) + g;
+    });
+    const scorers = Object.entries(scorersMap).map(([name, goals]) => ({ name, goals }));
+
+    db.ref('matches').push({ opponent: opp, our, their, date, present, scorers })
+      .then(() => { resetForm(); toast('Meci salvat!'); })
+      .catch(() => toast('Eroare la salvare!', true));
+  }
+
+  function deleteMatch(id) {
+    if (!confirm('Ștergi acest meci definitiv?')) return;
+    db.ref('matches/' + id).remove()
+      .then(() => toast('Meci șters.'))
+      .catch(() => toast('Eroare la ștergere!', true));
+  }
+
+  // ── TABS ──
+  function showTab(name, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (el) el.classList.add('active');
+  }
+
+  // ── TOAST ──
+  function toast(msg, err = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (err ? ' err' : '');
+    setTimeout(() => t.className = 'toast', 2800);
+  }
+</script>
+</body>
+</html>
