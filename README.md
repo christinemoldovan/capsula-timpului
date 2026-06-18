@@ -30,10 +30,7 @@ capsula-timpului/
    cd capsula-timpului
    ```
 
-2. Copiază `firebase-config.example.js` în `firebase-config.js`:
-   ```bash
-   cp firebase-config.example.js firebase-config.js
-   ```
+2. Creează `firebase-config.js`:
 
 3. Completează `firebase-config.js` cu valorile reale din [Firebase Console](https://console.firebase.google.com) → Project Settings → Your apps:
    ```js
@@ -65,7 +62,3 @@ Aplicația va fi disponibilă la `https://<project-id>.web.app`.
 - **Lista jucătorilor** și **portarul** se modifică direct în `index.html`, în variabilele `PLAYERS` și `GK`.
 - **Parola de admin** se modifică în `index.html`, variabila `ADMIN_PASSWORD`.
 - **Regulile Firebase Database** (citire/scriere publică) se configurează în Firebase Console → Realtime Database → Rules.
-
-## Notă despre securitate
-
-Cheia `apiKey` din Firebase nu este un secret critic (e identificator public, nu autentificare), dar fișierul `firebase-config.js` este exclus din Git prin `.gitignore` ca bună practică. Pentru control real al accesului la date, configurează regulile Realtime Database corespunzător.
