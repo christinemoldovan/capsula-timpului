@@ -43,6 +43,7 @@ capsula-timpului/
      messagingSenderId: "...",
      appId: "..."
    };
+   const ADMIN_PASSWORD = "parola-ta-aici";
    ```
 
 4. Deschide `index.html` direct în browser pentru a testa local.
